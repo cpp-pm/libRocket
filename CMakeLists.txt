@@ -2,7 +2,12 @@
 # Load Hunter  =====================
 #===================================
 
-
+set(HUNTER_ROOT ../../hunter_root)
+include("cmake/HunterGate.cmake")
+HunterGate(
+    URL "https://github.com/Dinno/hunter/archive/freetype.tar.gz"
+    SHA1 "c6ac5569263d09b8c872aeb7fabe158517eeecec"
+)
 
 #===================================
 # Build script for libRocket =======
@@ -56,6 +61,9 @@ if(POLICY CMP0042)
 endif(POLICY CMP0042)
 
 project(libRocket C CXX)
+
+# Ask Hunter to download dependencies
+hunter_add_package(freetype)
 
 # paths
 include(GNUInstallDirs)
@@ -250,8 +258,6 @@ endif()
 #===================================
 # Setup paths ======================
 #===================================
-
-set(PROJECT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/..)
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/Include
