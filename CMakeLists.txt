@@ -2,11 +2,10 @@
 # Load Hunter  =====================
 #===================================
 
-set(HUNTER_ROOT ../../hunter_root)
 include("cmake/HunterGate.cmake")
 HunterGate(
-    URL "https://github.com/Dinno/hunter/archive/freetype.tar.gz"
-    SHA1 "c6ac5569263d09b8c872aeb7fabe158517eeecec"
+    URL "https://github.com/ruslo/hunter/archive/v0.12.35.tar.gz"
+    SHA1 "8b7ad6ac6c1485ca8ed6e036f83aa4f060e48e32"
 )
 
 #===================================
@@ -42,7 +41,7 @@ endif(APPLE)
 
 # We use the new OSX_ARCHITECTURES property
 # and GNUInstallDirs module
-cmake_minimum_required(VERSION 2.8.5)
+cmake_minimum_required(VERSION 3.0)
 
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0015 NEW)
@@ -62,9 +61,6 @@ endif(POLICY CMP0042)
 
 project(libRocket C CXX)
 
-# Ask Hunter to download dependencies
-hunter_add_package(freetype)
-
 # paths
 include(GNUInstallDirs)
 
@@ -76,12 +72,6 @@ set(PROJECT_VERSION ${LIBROCKET_VERSION_MAJOR}.${LIBROCKET_VERSION_MINOR}.${LIBR
 
 # Search in the 'cmake' directory for additional CMake modules.
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
-# Old versions of CMake need some updated Modules, but we don't want
-# to override newer versions of CMake which have working versions
-if(CMAKE_MAJOR_VERSION LESS 3)
-	list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/v2fixes)
-endif()
 
 #===================================
 # Environment tests ================
@@ -95,21 +85,6 @@ include(TestForSTDNamespace)
 # Provide hints as to where depends=
 # might be found                   =
 #===================================
-
-if(NOT DEFINED ENV{FREETYPE_DIR})
-	set(ENV{FREETYPE_DIR} "${PROJECT_SOURCE_DIR}/../Dependencies")
-endif()
-
-#if(NOT DEFINED ENV{Boost_DIR})
-#	set(ENV{Boost_DIR} "${PROJECT_SOURCE_DIR}/../Dependencies")
-#endif()
-if(NOT DEFINED ENV{BOOST_ROOT})
-	set(ENV{BOOST_ROOT} "${PROJECT_SOURCE_DIR}/../Dependencies/boost")
-endif()
-
-if(NOT DEFINED ENV{LUA_DIR})
-	set(ENV{LUA_DIR} "${PROJECT_SOURCE_DIR}/../Dependencies")
-endif()
 
 if(NOT DEFINED ENV{SDL2DIR})
 	set(ENV{SDL2DIR} "${PROJECT_SOURCE_DIR}/../Dependencies")
@@ -203,20 +178,9 @@ ENDIF(WIN32)
 #===================================
 
 # FreeType
-if(CMAKE_MAJOR_VERSION LESS 3)
-	# Freetype changed the layout of its header files, we  need to use 
-	# the FindFreetype module from cmake v3 at least, included here
-	find_package(Freetype-v2fix REQUIRED)	
-else()
-	find_package(Freetype REQUIRED)	
-endif()
-
-if(FREETYPE_FOUND)
-		include_directories(${FREETYPE_INCLUDE_DIRS})
-		link_directories(${FREETYPE_LINK_DIRS})
-		list(APPEND CORE_LINK_LIBS ${FREETYPE_LIBRARY})
-endif()
-mark_as_advanced(FREETYPE_INCLUDE_DIRS FREETYPE_LIBRARY FREETYPE_LINK_DIRECTORIES)
+hunter_add_package(freetype) # Ask Hunter to download dependencies
+find_package(freetype REQUIRED CONFIG)	
+list(APPEND CORE_LINK_LIBS freetype::freetype)
 
 # Boost and Python
 if(BUILD_PYTHON_BINDINGS)
@@ -233,25 +197,21 @@ if(BUILD_PYTHON_BINDINGS)
 
     #set(Boost_USE_STATIC_LIBS OFF)
     #set(Boost_USE_MULTITHREADED ON)
-    find_package(Boost 1.40.0 COMPONENTS python REQUIRED)
+    hunter_add_package(Boost COMPONENTS python)
+    find_package(Boost 1.40.0 COMPONENTS python REQUIRED CONFIG)
     if(Boost_FOUND)
-        include_directories(${Boost_INCLUDE_DIR})
+        #include_directories(${Boost_INCLUDE_DIR})
+	message("PYTHON_LIBRARY: ${PYTHON_LIBRARY}, Boost_LIBRARIES: ${Boost_LIBRARIES}")
         list(APPEND PY_BINDINGS_LINK_LIBS ${PYTHON_LIBRARY} ${Boost_LIBRARIES})
     endif()
 
-endif()
+endif()                                                  
 
 #Lua
 if(BUILD_LUA_BINDINGS)
-    if(CMAKE_MAJOR_VERSION LESS 3)
-        find_package(Lua-v2fix)
-    else()
-        find_package(Lua)
-    endif()
-    if(LUA_FOUND)
-        include_directories(${LUA_INCLUDE_DIR})
-        list(APPEND LUA_BINDINGS_LINK_LIBS ${LUA_LIBRARIES})
-    endif()
+    hunter_add_package(Lua)
+    find_package(Lua REQUIRED CONFIG)
+    list(APPEND LUA_BINDINGS_LINK_LIBS Lua::lua_lib)
 endif()
 
 
